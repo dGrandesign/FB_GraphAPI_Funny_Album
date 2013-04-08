@@ -1,0 +1,85 @@
+import org.json.*;
+String photoURL =" ";
+String statusStr = " ";
+
+//insert your facebook ID and access token and remove brackets :< >
+String sanketAPI = "https://graph.facebook.com/"+ "<facebook ID>"+"fields=statuses.limit(30),photos.limit(100)&access_token="+"<access token>";  
+int imgWidth, imgHeight, index;
+boolean drawFrame;                
+PFont coverFont, statusFont;
+int msgBoxWidth, msgBoxHeight;
+PImage sanketPic, frame;
+
+JSONObject tempx, tempy;
+JSONObject jObj;
+JSONObject allComments ;
+JSONArray comment ;
+
+JSONObject allPhotos;
+JSONArray photoData;
+
+void setup() {
+  size(1280, 800);
+  noStroke();
+  background(0);
+  coverFont= loadFont("TirantiSolidLetPlain-48.vlw");
+  statusFont= loadFont("Teen-28.vlw");
+  frame= loadImage("framePng.png");        //Insert your frame here
+  textFont(coverFont);
+  drawFrame=false;                         //Don't show FB data initially (Wait to fetch the data on mouse click)
+  color(255);
+  text("Facebook memories..", width/2, height/2);
+  imageMode(CENTER);
+  textFont(statusFont);
+
+}
+
+void draw() {
+
+  textAlign(CENTER);
+
+  if (drawFrame==true) {    //If FB data is fetched, execute 
+    background(0);
+      
+    image(sanketPic, width/2, height/2);    //Draw photo at center
+    filter(GRAY);  
+    image(frame, width/2, height/2, imgWidth, imgHeight);  //Overlap photo with frame
+    msgBoxHeight= (int)textWidth(commentStr)/1024;        //Change size of message's background according to the message length
+    if (msgBoxHeight==0)
+      msgBoxWidth = (int)textWidth(commentStr);
+    else
+      msgBoxWidth = 1024;
+
+    fill(0,0.6);
+    rect((width/2 - msgBoxWidth/2 -40), 25, msgBoxWidth, (msgBoxHeight+1)*50 );
+    //println(width/2 - msgBoxWidth/2 +20);
+    fill(255);
+    textFont(statusFont);
+    text(statusStr, 122, 30, 1024, 900);     // Write the status message
+    drawFrame=false;                         //Don't draw again until new FB data are fetched 
+  }
+}
+
+void loadJson() {
+
+  String rawJson = join(loadStrings(sanketAPI), "\n");
+  
+  jObj = new JSONObject(rawJson);
+  allComments = jObj.getJSONObject("statuses");
+  comment = allComments.getJSONArray("data");
+
+  allPhotos = jObj.getJSONObject("photos");
+  photoData = allPhotos.getJSONArray("data");
+  tempy = photoData.getJSONObject((int)random(0, photoData.length()));
+  photoURL = tempy.getString("source");
+  imgWidth = tempy.getInt("width");
+  imgHeight = tempy.getInt("height");
+  tempx= comment.getJSONObject((int)random(0, comment.length()));
+  commentStr = tempx.getString("message");
+  sanketPic = loadImage(photoURL);
+  drawFrame=true;
+}
+
+void mousePressed() {
+  loadJson();
+}
